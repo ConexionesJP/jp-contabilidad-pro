@@ -2,237 +2,59 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>JP CONTABILIDAD | Sistema POS Colombia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JP ENTERPRISE | Microempresa ERP</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --cian: #00d2ff; --morado: #bc13fe; --fondo: #050505; --exito: #2ecc71; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); color: white; margin: 0; padding: 20px; }
-        .grid-principal { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; max-width: 1300px; margin: auto; }
-        .card { background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
-        h2 { color: var(--cian); border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.2rem; }
+        :root { --main: #00d2ff; --accent: #bc13fe; --bg: #0a0a12; --card: #161625; --text: #e0e0e0; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow-x: hidden; }
         
-        input, select { width: 95%; padding: 12px; margin: 8px 0; background: #000; color: white; border: 1px solid #444; border-radius: 8px; }
-        input:focus { border-color: var(--cian); outline: none; }
-        
-        .btn { width: 100%; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 8px; border: none; transition: 0.3s; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .btn-venta { background: var(--exito); color: black; }
-        .btn-guardar { background: #222; color: white; border: 1px solid #444; }
-        .btn-cierre { background: var(--morado); color: white; font-size: 1.1rem; }
-        
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .stats-box { background: #1a1a1a; padding: 15px; border-radius: 10px; text-align: center; border-left: 4px solid var(--cian); }
-        .valor { font-size: 1.5rem; color: var(--exito); font-weight: bold; display: block; }
-        
-        .buscador-caja { position: relative; }
-        .tabla-scroll { max-height: 300px; overflow-y: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #222; }
-        th { color: var(--cian); position: sticky; top: 0; background: #111; }
+        /* Sidebar Estilo Pro */
+        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; padding: 25px; border-right: 1px solid #222; }
+        .nav-item { padding: 15px; border-radius: 10px; cursor: pointer; transition: 0.3s; margin-bottom: 5px; color: #888; display: flex; align-items: center; gap: 12px; }
+        .nav-item:hover, .nav-item.active { background: rgba(0, 210, 255, 0.1); color: var(--main); }
 
-        .historial-item { font-size: 0.85rem; background: #161616; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--morado); }
-        .badge-stock { background: #333; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+        .main { margin-left: 310px; padding: 40px; width: calc(100% - 310px); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+        
+        /* Cards */
+        .card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid #2a2a3a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .stat-val { font-size: 2rem; font-weight: 800; display: block; margin-top: 10px; color: #fff; }
+        
+        /* Inputs y Botones */
+        input, select { width: 100%; padding: 12px; background: #0a0a12; border: 1px solid #333; border-radius: 10px; color: white; margin: 10px 0; box-sizing: border-box; }
+        .btn { border: none; padding: 14px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; display: flex; justify-content: center; gap: 10px; }
+        .btn-primary { background: linear-gradient(45deg, var(--main), var(--accent)); color: white; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 210, 255, 0.4); }
+
+        /* Tabla Estilo Enterprise */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; color: #555; font-size: 0.8rem; text-transform: uppercase; padding: 15px; border-bottom: 1px solid #222; }
+        td { padding: 15px; border-bottom: 1px solid #1f1f2e; font-size: 0.9rem; }
+        .stock-tag { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+        .stock-ok { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .stock-low { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+
+        #searchBox { border-color: var(--main); font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center;"><i class="fas fa-wallet"></i> JP CONTABILIDAD <span style="color:var(--cian)">PRO</span></h1>
+    <nav class="sidebar">
+        <h2 style="color:var(--main); margin-bottom: 40px;">JP ENTERPRISE</h2>
+        <div class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</div>
+        <div class="nav-item"><i class="fas fa-boxes"></i> Inventario</div>
+        <div class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Ventas</div>
+        <div class="nav-item"><i class="fas fa-users"></i> Clientes</div>
+        <div class="nav-item" onclick="finalizarDia()" style="margin-top: 50px; color: #e74c3c;"><i class="fas fa-power-off"></i> Cierre de Día</div>
+    </nav>
 
-    <div class="grid-principal">
-        
-        <div>
+    <div class="main">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+            <h1>Bienvenido, <span style="color: var(--main);">Conexiones JP</span></h1>
+            <div id="fecha-actual">Cargando fecha...</div>
+        </header>
+
+        <div class="grid">
             <div class="card">
-                <h2><i class="fas fa-plus-circle"></i> Nuevo Producto</h2>
-                <input type="text" id="nombreP" placeholder="Nombre del producto">
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" id="costoP" placeholder="Costo ($)">
-                    <input type="number" id="ventaP" placeholder="Venta ($)">
-                    <input type="number" id="unidadesP" placeholder="Stock">
-                </div>
-                <button class="btn btn-guardar" onclick="agregarProducto()">
-                    <i class="fas fa-save"></i> GUARDAR EN INVENTARIO
-                </button>
-            </div>
-
-            <div class="card">
-                <h2><i class="fas fa-shopping-cart"></i> Realizar Venta</h2>
-                <div class="buscador-caja">
-                    <input type="text" id="busqueda" placeholder="🔍 Buscar producto..." onkeyup="filtrarProductos()">
-                </div>
-                <select id="listaProductos" size="5"></select>
-                <button class="btn btn-venta" onclick="registrarVenta()">
-                    <i class="fas fa-check-circle"></i> COMPLETAR VENTA (COP)
-                </button>
-            </div>
-        </div>
-
-        <div>
-            <div class="card">
-                <h2><i class="fas fa-chart-pie"></i> Estadísticas del Día (Tiempo Real)</h2>
-                <div class="stats-grid">
-                    <div class="stats-box">
-                        <small>GANANCIA NETA</small>
-                        <span id="gananciaTotal" class="valor">$ 0</span>
-                    </div>
-                    <div class="stats-box">
-                        <small>MÁS VENDIDO 👑</small>
-                        <span id="productoTop" style="color: gold; font-weight: bold;">---</span>
-                    </div>
-                </div>
-                
-                <div class="tabla-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Stock</th>
-                                <th>Ventas Hoy</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaStock"></tbody>
-                    </table>
-                </div>
-
-                <button class="btn btn-cierre" onclick="finalizarDia()">
-                    <i class="fas fa-calendar-check"></i> FINALIZAR DÍA Y GUARDAR
-                </button>
-            </div>
-
-            <div class="card">
-                <h2><i class="fas fa-history"></i> Historial de Cierres</h2>
-                <div id="contenedorHistorial"></div>
-            </div>
-        </div>
-
-    </div>
-
-<script>
-    let productos = JSON.parse(localStorage.getItem('jp_prods')) || [];
-    let ventasDelDia = JSON.parse(localStorage.getItem('jp_ventas_dia')) || [];
-    let historialCierres = JSON.parse(localStorage.getItem('jp_historial')) || [];
-
-    const formatoMoneda = new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-    });
-
-    function agregarProducto() {
-        const n = document.getElementById('nombreP').value;
-        const c = parseFloat(document.getElementById('costoP').value);
-        const v = parseFloat(document.getElementById('ventaP').value);
-        const u = parseInt(document.getElementById('unidadesP').value);
-
-        if(n && c && v && u) {
-            productos.push({ nombre: n, costo: c, venta: v, stock: u, vendidosHoy: 0 });
-            localStorage.setItem('jp_prods', JSON.stringify(productos));
-            actualizarTodo();
-            limpiarCampos(['nombreP', 'costoP', 'ventaP', 'unidadesP']);
-        } else {
-            alert("Completa todos los campos");
-        }
-    }
-
-    function registrarVenta() {
-        const index = document.getElementById('listaProductos').value;
-        if(index === "") return alert("Selecciona un producto");
-
-        const p = productos[index];
-        if(p.stock > 0) {
-            p.stock -= 1;
-            p.vendidosHoy += 1;
-            ventasDelDia.push({ 
-                nombre: p.nombre, 
-                ganancia: (p.venta - p.costo), 
-                precioVenta: p.venta 
-            });
-            
-            localStorage.setItem('jp_prods', JSON.stringify(productos));
-            localStorage.setItem('jp_ventas_dia', JSON.stringify(ventasDelDia));
-            actualizarTodo();
-        } else {
-            alert("¡Sin Stock disponible para este producto!");
-        }
-    }
-
-    function finalizarDia() {
-        if(ventasDelDia.length === 0) return alert("No hay ventas registradas hoy");
-
-        let gananciaDia = ventasDelDia.reduce((total, v) => total + v.ganancia, 0);
-        let totalVendido = ventasDelDia.reduce((total, v) => total + v.precioVenta, 0);
-        let masVendido = [...productos].sort((a,b) => b.vendidosHoy - a.vendidosHoy)[0];
-
-        const cierre = {
-            fecha: new Date().toLocaleDateString(),
-            ganancia: gananciaDia,
-            bruto: totalVendido,
-            estrella: masVendido.vendidosHoy > 0 ? masVendido.nombre : "Ninguno",
-            totalItems: ventasDelDia.length
-        };
-
-        historialCierres.unshift(cierre);
-        localStorage.setItem('jp_historial', JSON.stringify(historialCierres));
-
-        // Limpiar jornada
-        ventasDelDia = [];
-        productos.forEach(p => p.vendidosHoy = 0);
-        localStorage.setItem('jp_ventas_dia', JSON.stringify(ventasDelDia));
-        localStorage.setItem('jp_prods', JSON.stringify(productos));
-        
-        actualizarTodo();
-        alert("¡Cierre de día exitoso!");
-    }
-
-    function filtrarProductos() {
-        const texto = document.getElementById('busqueda').value.toLowerCase();
-        const select = document.getElementById('listaProductos');
-        select.innerHTML = "";
-        
-        productos.forEach((p, i) => {
-            if(p.nombre.toLowerCase().includes(texto)) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.text = `${p.nombre} | Stock: ${p.stock} | Precio: ${formatoMoneda.format(p.venta)}`;
-                select.add(opt);
-            }
-        });
-    }
-
-    function actualizarTodo() {
-        // Actualizar Lista y Tabla
-        filtrarProductos();
-        const tabla = document.getElementById('tablaStock');
-        tabla.innerHTML = productos.map(p => `
-            <tr>
-                <td>${p.nombre}</td>
-                <td><span class="badge-stock">${p.stock} unid.</span></td>
-                <td>${p.vendidosHoy}</td>
-            </tr>
-        `).join('');
-
-        // Estadísticas
-        let ganancia = ventasDelDia.reduce((total, v) => total + v.ganancia, 0);
-        document.getElementById('gananciaTotal').innerText = formatoMoneda.format(ganancia);
-
-        let top = [...productos].sort((a,b) => b.vendidosHoy - a.vendidosHoy);
-        document.getElementById('productoTop').innerText = top[0] && top[0].vendidosHoy > 0 ? top[0].nombre : "---";
-
-        // Historial
-        const histDiv = document.getElementById('contenedorHistorial');
-        histDiv.innerHTML = historialCierres.map(h => `
-            <div class="historial-item">
-                <b>📅 ${h.fecha}</b> | Ventas: ${h.totalItems}<br>
-                <span style="color:var(--exito)">Ganancia: ${formatoMoneda.format(h.ganancia)}</span><br>
-                ⭐ Top: ${h.estrella}
-            </div>
-        `).join('');
-    }
-
-    function limpiarCampos(ids) {
-        ids.forEach(id => document.getElementById(id).value = "");
-    }
-
-    actualizarTodo();
-</script>
-
-</body>
-</html>
