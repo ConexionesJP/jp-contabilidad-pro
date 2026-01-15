@@ -3,245 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JP ERP ULTIMATE | Business Intelligence</title>
+    <title>JP ERP ULTIMATE | Impresión Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --main: #00d2ff; --accent: #bc13fe; --bg: #05050a; --card: #12121f; --text: #f0f0f0; --success: #00ff88; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar Glassmorphism */
-        .sidebar { width: 280px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); padding: 30px 20px; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 100; }
-        .nav-item { padding: 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 8px; display: flex; align-items: center; gap: 15px; color: #777; font-weight: 500; }
-        .nav-item:hover, .nav-item.active { background: linear-gradient(90deg, rgba(0,210,255,0.2), transparent); color: var(--main); box-shadow: inset 4px 0 0 var(--main); }
-
-        .main { flex: 1; padding: 40px; overflow-y: auto; scroll-behavior: smooth; }
-        .page { display: none; animation: slideUp 0.4s ease-out; }
+        /* Estilos de la App */
+        .sidebar { width: 260px; background: #000; padding: 30px 20px; border-right: 1px solid #222; display: flex; flex-direction: column; }
+        .nav-item { padding: 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 8px; display: flex; align-items: center; gap: 15px; color: #777; }
+        .nav-item:hover, .nav-item.active { background: rgba(0,210,255,0.1); color: var(--main); }
+        .main { flex: 1; padding: 40px; overflow-y: auto; }
+        .page { display: none; }
         .page.active { display: block; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid #222; margin-bottom: 25px; }
 
-        /* Componentes Estilo Moderno */
-        .card { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid #222; margin-bottom: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: var(--card); padding: 25px; border-radius: 20px; border-left: 5px solid var(--main); position: relative; overflow: hidden; }
-        .stat-card i { position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.05; color: white; }
-
-        input, select { width: 100%; padding: 14px; background: #080810; border: 1px solid #333; border-radius: 12px; color: white; margin: 10px 0; font-size: 1rem; transition: 0.3s; }
-        input:focus { border-color: var(--main); outline: none; box-shadow: 0 0 10px rgba(0,210,255,0.2); }
-
-        .btn { border: none; padding: 15px 25px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        input, select { width: 100%; padding: 14px; background: #080810; border: 1px solid #333; border-radius: 12px; color: white; margin: 10px 0; }
+        .btn { border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.3s; text-transform: uppercase; }
         .btn-main { background: var(--main); color: #000; }
-        .btn-accent { background: linear-gradient(45deg, var(--accent), #6a11cb); color: #fff; }
-        .btn:hover { transform: translateY(-3px); filter: brightness(1.2); }
+        .btn-accent { background: var(--accent); color: #fff; }
+        .btn-print { background: #fff; color: #000; margin-top: 15px; display: none; }
 
-        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        th { text-align: left; padding: 15px; color: #555; font-size: 0.75rem; text-transform: uppercase; }
-        td { padding: 20px; background: #1a1a2e; first-child { border-radius: 15px 0 0 15px; } last-child { border-radius: 0 15px 15px 0; } }
+        /* ESTILOS DE IMPRESIÓN (OCULTOS EN PANTALLA) */
+        #ticket-print { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #ticket-print, #ticket-print * { visibility: visible; }
+            #ticket-print { display: block; position: absolute; left: 0; top: 0; width: 80mm; color: #000; background: #fff; padding: 10px; font-family: 'Courier New', Courier, monospace; }
+            .no-print { display: none; }
+        }
 
-        .factura-box { background: #fff; color: #333; padding: 20px; border-radius: 10px; font-family: monospace; display: none; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #222; text-align: left; }
     </style>
 </head>
 <body>
 
-    <nav class="sidebar">
-        <div style="text-align: center; margin-bottom: 40px;">
-            <h2 style="color:var(--main); margin:0;">JP <span style="font-weight: 300; color:white;">ULTIMATE</span></h2>
-            <small style="color:#444;">MICROEMPRESA ERP v3.0</small>
-        </div>
-        <div class="nav-item active" onclick="showPage('dashboard', this)"><i class="fas fa-th-large"></i> Vista General</div>
-        <div class="nav-item" onclick="showPage('inventario', this)"><i class="fas fa-box-open"></i> Inventario</div>
-        <div class="nav-item" onclick="showPage('ventas', this)"><i class="fas fa-shopping-bag"></i> Nueva Venta</div>
-        <div class="nav-item" onclick="finalizarDia()" style="margin-top: auto; color: #ff5e57;"><i class="fas fa-calendar-times"></i> Cerrar Caja</div>
+    <nav class="sidebar no-print">
+        <h2 style="color:var(--main); text-align:center;">JP ERP PRO</h2>
+        <div class="nav-item active" onclick="showPage('dashboard', this)"><i class="fas fa-chart-line"></i> Dashboard</div>
+        <div class="nav-item" onclick="showPage('inventario', this)"><i class="fas fa-boxes"></i> Inventario</div>
+        <div class="nav-item" onclick="showPage('ventas', this)"><i class="fas fa-cash-register"></i> Ventas</div>
+        <div class="nav-item" onclick="finalizarDia()" style="margin-top:auto; color:#ff4d4d;"><i class="fas fa-power-off"></i> Cierre</div>
     </nav>
 
-    <div class="main">
-        
+    <div class="main no-print">
         <div id="dashboard" class="page active">
-            <h1 style="margin-bottom: 30px;">Dashboard de Inteligencia</h1>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <small>UTILIDAD NETA (COP)</small>
-                    <div id="dash-ganancia" style="font-size: 1.8rem; color: var(--success); font-weight: 800;">$ 0</div>
-                    <i class="fas fa-hand-holding-usd"></i>
-                </div>
-                <div class="stat-card" style="border-left-color: var(--accent);">
-                    <small>ITEMS VENDIDOS</small>
-                    <div id="dash-ventas" style="font-size: 1.8rem; font-weight: 800;">0</div>
-                    <i class="fas fa-chart-line"></i>
-                </div>
-            </div>
-            
-            <div class="grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px;">
-                <div class="card">
-                    <h3>Gráfica de Rendimiento</h3>
-                    <canvas id="ventasChart" height="150"></canvas>
-                </div>
-                <div class="card">
-                    <h3>Cierres Recientes</h3>
-                    <div id="historial-lista" style="font-size: 0.85rem; color: #888;"></div>
-                </div>
-            </div>
+            <h1>Dashboard</h1>
+            <div class="card"><canvas id="ventasChart" height="100"></canvas></div>
         </div>
 
         <div id="inventario" class="page">
-            <h1>Gestión de Activos</h1>
+            <h1>Inventario</h1>
             <div class="card">
-                <h3>+ Registrar Nuevo Producto</h3>
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px;">
-                    <input type="text" id="inv-nombre" placeholder="Nombre del Producto">
-                    <input type="number" id="inv-costo" placeholder="Costo Unitario">
-                    <input type="number" id="inv-venta" placeholder="P. Venta Público">
-                    <input type="number" id="inv-stock" placeholder="Cantidad Inicial">
+                <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:10px;">
+                    <input type="text" id="in-n" placeholder="Producto">
+                    <input type="number" id="in-c" placeholder="Costo">
+                    <input type="number" id="in-v" placeholder="Venta">
+                    <input type="number" id="in-s" placeholder="Stock">
                 </div>
-                <button class="btn btn-main" onclick="agregarProducto()">Guardar en Nube Local</button>
+                <button class="btn btn-main" onclick="agregarProd()">Guardar</button>
             </div>
-            <div class="card" style="overflow-x: auto;">
-                <table>
-                    <thead><tr><th>Producto</th><th>Costo</th><th>Venta</th><th>Stock Actual</th><th>Opciones</th></tr></thead>
-                    <tbody id="tabla-inventario"></tbody>
-                </table>
-            </div>
+            <div class="card"><table id="tab-inv"></table></div>
         </div>
 
         <div id="ventas" class="page">
-            <h1>Caja Registradora</h1>
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px;">
+            <h1>Ventas</h1>
+            <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:20px;">
                 <div class="card">
-                    <h3>1. Selección de Ítem</h3>
-                    <input type="text" id="busqueda" placeholder="🔍 Escribe para buscar producto..." onkeyup="actualizarSelectVenta()">
-                    <select id="select-venta" size="10" onchange="calcularVenta()"></select>
+                    <input type="text" placeholder="Buscar..." onkeyup="filterVenta(this.value)">
+                    <select id="sel-v" size="10" onchange="calcVenta()"></select>
                 </div>
                 <div class="card">
-                    <h3>2. Liquidación</h3>
-                    <label>Cantidad:</label>
-                    <input type="number" id="v-cant" value="1" min="1" oninput="calcularVenta()">
-                    <label>Descuento Especial (COP):</label>
-                    <input type="number" id="v-desc" value="0" oninput="calcularVenta()" placeholder="Ej: 5000">
-                    
-                    <div style="background: rgba(0,255,136,0.05); padding: 25px; border-radius: 15px; border: 1px solid var(--success); text-align: center; margin-top: 15px;">
-                        <small style="color: var(--success);">TOTAL A COBRAR</small>
-                        <div id="v-total" style="font-size: 2.2rem; font-weight: 900; color: #fff;">$ 0</div>
-                    </div>
-                    
-                    <button class="btn btn-accent" onclick="registrarVenta()">PROCESAR PAGO Y FACTURAR</button>
-                    
-                    <div id="factura-v" class="factura-box"></div>
+                    <input type="number" id="v-cant" value="1" min="1" oninput="calcVenta()">
+                    <input type="number" id="v-desc" value="0" placeholder="Descuento COP" oninput="calcVenta()">
+                    <div style="font-size:2rem; text-align:center; margin:20px 0;" id="total-v">$ 0</div>
+                    <button class="btn btn-accent" onclick="realizarVenta()">Cobrar</button>
+                    <button id="btn-print-act" class="btn btn-print" onclick="window.print()">
+                        <i class="fas fa-print"></i> Imprimir Factura
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
+    <div id="ticket-print">
+        <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px;">
+            <h2 style="margin:0;">CONEXIONES JP</h2>
+            <p style="margin:0; font-size:12px;">Soluciones Tecnológicas</p>
+            <p id="t-fecha" style="font-size:10px;"></p>
+        </div>
+        <div style="padding: 10px 0; font-size: 14px;">
+            <div style="display:flex; justify-content: space-between;">
+                <span id="t-prod">Producto</span>
+                <span id="t-cant">x0</span>
+            </div>
+            <div style="text-align: right; font-weight: bold;" id="t-subtotal">Sub: $0</div>
+            <div style="text-align: right;" id="t-desc">Desc: -$0</div>
+            <div style="text-align: right; border-top: 1px solid #000; font-size:18px; margin-top:5px;" id="t-total">TOTAL: $0</div>
+        </div>
+        <p style="text-align:center; font-size:10px; margin-top:20px;">¡Gracias por su preferencia!<br>Software gestionado por JP ERP</p>
     </div>
 
 <script>
     const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-    let db = JSON.parse(localStorage.getItem('jp_ultimate_db')) || { prods: [], ventas: [], hist: [] };
-    let myChart;
+    let db = JSON.parse(localStorage.getItem('jp_v4')) || { prods: [], ventas: [], hist: [] };
 
-    function showPage(pId, el) {
+    function showPage(id, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pId).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
-        actualizarUI();
+        updateUI();
     }
 
-    function agregarProducto() {
-        const n = document.getElementById('inv-nombre').value, c = +document.getElementById('inv-costo').value, 
-              v = +document.getElementById('inv-venta').value, s = +document.getElementById('inv-stock').value;
-        if(n && c && v) {
-            db.prods.push({ n, c, v, s, vh: 0 });
-            save(); 
-            document.querySelectorAll('#inventario input').forEach(i => i.value = "");
+    function agregarProd() {
+        const n = document.getElementById('in-n').value, c = +document.getElementById('in-c').value, v = +document.getElementById('in-v').value, s = +document.getElementById('in-s').value;
+        if(n && v) { db.prods.push({n, c, v, s, vh:0}); save(); }
+    }
+
+    function calcVenta() {
+        const i = document.getElementById('sel-v').value, cant = +document.getElementById('v-cant').value, desc = +document.getElementById('v-desc').value;
+        if(i !== "") {
+            const total = (db.prods[i].v * cant) - desc;
+            document.getElementById('total-v').innerText = fmt.format(total);
         }
     }
 
-    function calcularVenta() {
-        const idx = document.getElementById('select-venta').value;
-        const cant = +document.getElementById('v-cant').value || 0;
-        const desc = +document.getElementById('v-desc').value || 0;
-        if(idx !== "") {
-            const total = (db.prods[idx].v * cant) - desc;
-            document.getElementById('v-total').innerText = fmt.format(total);
-        }
-    }
-
-    function registrarVenta() {
-        const idx = document.getElementById('select-venta').value, cant = +document.getElementById('v-cant').value, desc = +document.getElementById('v-desc').value;
-        if(idx === "" || cant <= 0) return alert("Error en datos");
-        const p = db.prods[idx];
+    function realizarVenta() {
+        const i = document.getElementById('sel-v').value, cant = +document.getElementById('v-cant').value, desc = +document.getElementById('v-desc').value;
+        if(i === "") return;
+        const p = db.prods[i];
         if(p.s >= cant) {
+            const total = (p.v * cant) - desc;
             p.s -= cant; p.vh += cant;
-            const totalV = (p.v * cant) - desc;
-            const util = totalV - (p.c * cant);
-            db.ventas.push({ n: p.n, g: util, v: totalV, c: cant });
+            db.ventas.push({ n:p.n, v:total, g: total-(p.c*cant), c:cant });
             
-            // Generar Factura Visual
-            const f = document.getElementById('factura-v');
-            f.style.display = "block";
-            f.innerHTML = `*** RECIBO JP ***<br>${new Date().toLocaleString()}<br>ITEM: ${p.n}<br>CANT: ${cant}<br>DESC: ${fmt.format(desc)}<br>TOTAL: ${fmt.format(totalV)}<br>¡Gracias por su compra!`;
+            // Llenar Ticket
+            document.getElementById('t-fecha').innerText = new Date().toLocaleString();
+            document.getElementById('t-prod').innerText = p.n;
+            document.getElementById('t-cant').innerText = "x" + cant;
+            document.getElementById('t-subtotal').innerText = "Sub: " + fmt.format(p.v * cant);
+            document.getElementById('t-desc').innerText = "Desc: -" + fmt.format(desc);
+            document.getElementById('t-total').innerText = "TOTAL: " + fmt.format(total);
             
+            document.getElementById('btn-print-act').style.display = "block";
             save();
-            alert("Venta Exitosa");
-        } else alert("Sin Stock");
+            alert("Venta registrada. Ya puede imprimir.");
+        } else alert("No hay stock");
     }
 
     function finalizarDia() {
-        if(!db.ventas.length) return alert("Caja vacía");
-        const g = db.ventas.reduce((a,b) => a + b.g, 0), v = db.ventas.reduce((a,b) => a + b.v, 0);
-        db.hist.unshift({ f: new Date().toLocaleDateString(), g, v, c: db.ventas.length });
-        db.ventas = []; db.prods.forEach(p => p.vh = 0);
+        if(!db.ventas.length) return;
+        const g = db.ventas.reduce((a,b)=>a+b.g, 0);
+        db.hist.unshift({f: new Date().toLocaleDateString(), g});
+        db.ventas = []; db.prods.forEach(p=>p.vh=0);
         save();
-        alert("Cierre de caja generado.");
+        alert("Cierre de caja exitoso");
     }
 
-    function save() { localStorage.setItem('jp_ultimate_db', JSON.stringify(db)); actualizarUI(); }
+    function save() { localStorage.setItem('jp_v4', JSON.stringify(db)); updateUI(); }
 
-    function actualizarUI() {
-        // Tabla
-        document.getElementById('tabla-inventario').innerHTML = db.prods.map((p, i) => `
-            <tr><td><b>${p.n}</b></td><td>${fmt.format(p.c)}</td><td>${fmt.format(p.v)}</td>
-            <td style="color:${p.s < 5 ? '#ff5e57' : '#00ff88'}">${p.s} und</td>
-            <td><button onclick="db.prods.splice(${i},1);save()" style="background:none; border:none; color:#555; cursor:pointer;">✖</button></td></tr>
-        `).join('');
-
-        actualizarSelectVenta();
-
-        // Stats
-        const gHoy = db.ventas.reduce((a,b) => a + b.g, 0);
-        document.getElementById('dash-ganancia').innerText = fmt.format(gHoy);
-        document.getElementById('dash-ventas').innerText = db.ventas.reduce((a,b) => a + b.c, 0);
+    function updateUI() {
+        const tbody = document.getElementById('tab-inv');
+        tbody.innerHTML = `<tr><th>Producto</th><th>Stock</th><th>Venta</th></tr>` + db.prods.map(p => `<tr><td>${p.n}</td><td>${p.s}</td><td>${fmt.format(p.v)}</td></tr>`).join('');
         
-        // Historial
-        document.getElementById('historial-lista').innerHTML = db.hist.slice(0,5).map(h => `
-            <div style="margin-bottom:10px; border-bottom:1px solid #222; padding-bottom:5px;">
-                📅 ${h.f} - Ganancia: <span style="color:var(--success)">${fmt.format(h.g)}</span>
-            </div>
-        `).join('');
-
-        initChart();
+        filterVenta("");
     }
 
-    function actualizarSelectVenta() {
-        const q = document.getElementById('busqueda').value.toLowerCase();
-        document.getElementById('select-venta').innerHTML = db.prods
-            .map((p, i) => ({p, i})).filter(x => x.p.n.toLowerCase().includes(q))
-            .map(x => `<option value="${x.i}">${x.p.n.toUpperCase()} [Stock: ${x.p.s}]</option>`).join('');
+    function filterVenta(q) {
+        document.getElementById('sel-v').innerHTML = db.prods.map((p,i) => ({p,i})).filter(x => x.p.n.toLowerCase().includes(q.toLowerCase()))
+            .map(x => `<option value="${x.i}">${x.p.n} (Stock: ${x.p.s})</option>`).join('');
     }
 
-    function initChart() {
-        const ctx = document.getElementById('ventasChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: db.hist.slice(0,7).reverse().map(h => h.f),
-                datasets: [{ label: 'Ganancias por día', data: db.hist.slice(0,7).reverse().map(h => h.g), backgroundColor: '#00d2ff' }]
-            },
-            options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-        });
-    }
-
-    actualizarUI();
+    updateUI();
 </script>
 </body>
 </html>
