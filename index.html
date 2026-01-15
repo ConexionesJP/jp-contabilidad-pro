@@ -1,1 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>JP Contabilidad | Panel de Control</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #00d2ff; --secondary: #bc13fe; --dark: #0f0f1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: #050505; height: 100vh; padding: 20px; border-right: 1px solid #222; position: fixed; }
+        .main-content { margin-left: 290px; padding: 30px; width: 100%; }
+        
+        .card { background: #1a1a2e; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        input, button { padding: 10px; margin: 5px 0; border-radius: 5px; border: none; }
+        input { width: 90%; background: #0f0f1a; color: white; border: 1px solid #444; }
+        
+        button { background: var(--secondary); color: white; cursor: pointer; font-weight: bold; width: 100%; }
+        button:hover { background: var(--primary); color: black; }
 
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border-bottom: 1px solid #333; padding: 12px; text-align: left; }
+        th { color: var(--primary); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .stat-box { background: linear-gradient(45deg, #1a1a2e, #050505); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid var(--primary); }
+        #canvas-container { width: 100%; max-width: 600px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 style="color: var(--primary)">JP Contabilidad</h2>
+    <hr border="0.1">
+    <p><i class="fas fa-box"></i> Inventario</p>
+    <p><i class="fas fa-shopping-cart"></i> Ventas del Día</p>
+    <p><i class="fas fa-chart-line"></i> Estadísticas</p>
+</div>
+
+<div class="main-content">
+    <h1>Panel de Control ConexionesJP</h1>
+
+    <div class="stats-grid">
+        <div class="stat-box"><h3>Ganancia Total</h3><p id="total-ganancia">$0</p></div>
+        <div class="stat-box"><h3>Ventas Hoy</h3><p id="ventas-hoy">0</p></div>
+        <div class="stat-box"><h3>Top Producto</h3><p id="top-producto">-</p></div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-plus-circle"></i> Ingresar Nuevo Producto</h3>
+        <input type="text" id="p-nombre" placeholder="Nombre del Producto">
+        <input type="number" id="p-costo" placeholder="Costo de Adquisición (Lo que te costó)">
+        <input type="number" id="p-venta" placeholder="Precio de Venta al Público">
+        <button onclick="agregarProducto()">Guardar Producto</button>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-cash-register"></i> Registrar Venta</h3>
+        <select id="select-producto" style="width: 100%; padding: 10px; background: #0f0f1a; color: white;"></select>
+        <button onclick="registrarVenta()" style="margin-top:10px; background: var(--primary); color: black;">Registrar Venta de Hoy</button>
+    </div>
+
+    <div class="card">
+        <h3>Historial de Ganancias por Producto</h3>
+        <table id="tabla-reporte">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Ventas</th>
+                    <th>Ganancia Unit.</th>
+                    <th>Ganancia Total</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="graficoVentas"></canvas>
+    </div>
+</div>
+
+<script>
+    let inventario = JSON.parse(localStorage.getItem('jp_inventario')) || [];
+    let ventas = JSON.parse(localStorage.getItem('jp_ventas')) || [];
+
+    function agregarProducto() {
+        const p = {
+            id: Date.now(),
+            nombre: document.getElementById('p-nombre').value,
+            costo: parseFloat(document.getElementById('p-costo').value),
+            venta: parseFloat(document.getElementById('p-venta').value),
+            vendidos: 0
+        };
+        inventario.push(p);
+        actualizarTodo();
+    }
+
+    function registrarVenta() {
+        const id = document.getElementById('select-producto').value;
+        const index = inventario.findIndex(p => p.id == id);
+        if(index !== -1) {
+            inventario[index].vendidos += 1;
+            ventas.push({fecha: new Date().toLocaleDateString(), producto: inventario[index].nombre});
+            actualizarTodo();
+        }
+    }
+
+    function actualizarTodo() {
+        localStorage.setItem('jp_inventario', JSON.stringify(inventario));
+        localStorage.setItem('jp_ventas', JSON.stringify(ventas));
+        render();
+    }
+
+    function render() {
+        const select = document.getElementById('select-producto');
+        const tabla = document.querySelector('#tabla-reporte tbody');
+        select.innerHTML = '';
+        tabla.innerHTML = '';
+        let totalG = 0;
+
+        inventario.forEach(p => {
+            // Llenar Select
+            select.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+            
+            // Llenar Tabla
+            let gananciaInd = p.venta - p.costo;
+            let gananciaTotal = gananciaInd * p.vendidos;
+            totalG += gananciaTotal;
+
+            tabla.innerHTML += `
+                <tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.vendidos}</td>
+                    <td>$${gananciaInd}</td>
+                    <td>$${gananciaTotal}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('total-ganancia').innerText = `$${totalG}`;
+        document.getElementById('ventas-hoy').innerText = ventas.filter(v => v.fecha === new Date().toLocaleDateString()).length;
+    }
+
+    render();
+</script>
+
+</body>
+</html>
