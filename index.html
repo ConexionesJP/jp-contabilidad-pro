@@ -2,76 +2,104 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>JP CONTABILIDAD | Sistema de Ventas</title>
+    <title>JP CONTABILIDAD | Sistema POS Colombia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --cian: #00d2ff; --morado: #bc13fe; --fondo: #050505; }
+        :root { --cian: #00d2ff; --morado: #bc13fe; --fondo: #050505; --exito: #2ecc71; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); color: white; margin: 0; padding: 20px; }
-        .grid-principal { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; margin: auto; }
-        .card { background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px; }
-        h2 { color: var(--cian); border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .grid-principal { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; max-width: 1300px; margin: auto; }
+        .card { background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        h2 { color: var(--cian); border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.2rem; }
         
-        input, select { width: 90%; padding: 10px; margin: 10px 0; background: #000; color: white; border: 1px solid var(--cian); border-radius: 5px; }
-        button { width: 100%; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 8px; border: none; transition: 0.3s; margin-top: 10px; }
+        input, select { width: 95%; padding: 12px; margin: 8px 0; background: #000; color: white; border: 1px solid #444; border-radius: 8px; }
+        input:focus { border-color: var(--cian); outline: none; }
         
-        .btn-venta { background: var(--cian); color: black; }
+        .btn { width: 100%; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 8px; border: none; transition: 0.3s; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-venta { background: var(--exito); color: black; }
         .btn-guardar { background: #222; color: white; border: 1px solid #444; }
-        .btn-cierre { background: var(--morado); color: white; font-size: 1.1rem; margin-top: 20px; }
+        .btn-cierre { background: var(--morado); color: white; font-size: 1.1rem; }
         
-        .stats-box { background: linear-gradient(135deg, #1a1a1a, #000); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #444; }
-        .ganancia-numero { font-size: 2rem; color: #2ecc71; font-weight: bold; }
-        .top-product { font-size: 1.5rem; color: #f1c40f; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .stats-box { background: #1a1a1a; padding: 15px; border-radius: 10px; text-align: center; border-left: 4px solid var(--cian); }
+        .valor { font-size: 1.5rem; color: var(--exito); font-weight: bold; display: block; }
+        
+        .buscador-caja { position: relative; }
+        .tabla-scroll { max-height: 300px; overflow-y: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #222; }
+        th { color: var(--cian); position: sticky; top: 0; background: #111; }
 
-        table { width: 100%; margin-top: 10px; text-align: left; border-collapse: collapse; }
-        th, td { padding: 10px; border-bottom: 1px solid #222; }
-        .historial-item { font-size: 0.9rem; color: #aaa; background: #1a1a1a; margin-bottom: 5px; padding: 10px; border-radius: 5px; }
+        .historial-item { font-size: 0.85rem; background: #161616; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--morado); }
+        .badge-stock { background: #333; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; color:white;">📊 PANEL CONTABLE <span style="color:var(--cian)">CONEXIONES JP</span></h1>
+    <h1 style="text-align:center;"><i class="fas fa-wallet"></i> JP CONTABILIDAD <span style="color:var(--cian)">PRO</span></h1>
 
     <div class="grid-principal">
         
         <div>
             <div class="card">
-                <h2><i class="fas fa-box"></i> 1. Inventario</h2>
-                <input type="text" id="nombreP" placeholder="Nombre del programa o servicio">
-                <input type="number" id="costoP" placeholder="Costo de producción ($)">
-                <input type="number" id="ventaP" placeholder="Precio de venta ($)">
-                <button class="btn-guardar" onclick="agregarProducto()">+ AGREGAR AL CATÁLOGO</button>
+                <h2><i class="fas fa-plus-circle"></i> Nuevo Producto</h2>
+                <input type="text" id="nombreP" placeholder="Nombre del producto">
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="costoP" placeholder="Costo ($)">
+                    <input type="number" id="ventaP" placeholder="Venta ($)">
+                    <input type="number" id="unidadesP" placeholder="Stock">
+                </div>
+                <button class="btn btn-guardar" onclick="agregarProducto()">
+                    <i class="fas fa-save"></i> GUARDAR EN INVENTARIO
+                </button>
             </div>
 
-            <div class="card" style="margin-top:20px;">
-                <h2><i class="fas fa-cart-plus"></i> 2. Registrar Venta</h2>
-                <select id="listaProductos"></select>
-                <button class="btn-venta" onclick="registrarVenta()">REGISTRAR VENTA DE AHORA</button>
+            <div class="card">
+                <h2><i class="fas fa-shopping-cart"></i> Realizar Venta</h2>
+                <div class="buscador-caja">
+                    <input type="text" id="busqueda" placeholder="🔍 Buscar producto..." onkeyup="filtrarProductos()">
+                </div>
+                <select id="listaProductos" size="5"></select>
+                <button class="btn btn-venta" onclick="registrarVenta()">
+                    <i class="fas fa-check-circle"></i> COMPLETAR VENTA (COP)
+                </button>
             </div>
         </div>
 
         <div>
             <div class="card">
-                <h2><i class="fas fa-chart-line"></i> Estadísticas del Día</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <h2><i class="fas fa-chart-pie"></i> Estadísticas del Día (Tiempo Real)</h2>
+                <div class="stats-grid">
                     <div class="stats-box">
-                        <p>GANANCIA TOTAL</p>
-                        <div id="gananciaTotal" class="ganancia-numero">$0</div>
+                        <small>GANANCIA NETA</small>
+                        <span id="gananciaTotal" class="valor">$ 0</span>
                     </div>
                     <div class="stats-box">
-                        <p>MÁS VENDIDO 👑</p>
-                        <div id="productoTop" class="top-product">---</div>
+                        <small>MÁS VENDIDO 👑</small>
+                        <span id="productoTop" style="color: gold; font-weight: bold;">---</span>
                     </div>
                 </div>
                 
-                <button class="btn-cierre" onclick="finalizarDia()">
-                    <i class="fas fa-flag-checkered"></i> FINALIZAR DÍA Y GUARDAR HISTORIAL
+                <div class="tabla-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock</th>
+                                <th>Ventas Hoy</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaStock"></tbody>
+                    </table>
+                </div>
+
+                <button class="btn btn-cierre" onclick="finalizarDia()">
+                    <i class="fas fa-calendar-check"></i> FINALIZAR DÍA Y GUARDAR
                 </button>
             </div>
 
-            <div class="card" style="margin-top:20px;">
+            <div class="card">
                 <h2><i class="fas fa-history"></i> Historial de Cierres</h2>
-                <div id="contenedorHistorial">
-                    </div>
+                <div id="contenedorHistorial"></div>
             </div>
         </div>
 
@@ -82,81 +110,128 @@
     let ventasDelDia = JSON.parse(localStorage.getItem('jp_ventas_dia')) || [];
     let historialCierres = JSON.parse(localStorage.getItem('jp_historial')) || [];
 
+    const formatoMoneda = new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+    });
+
     function agregarProducto() {
         const n = document.getElementById('nombreP').value;
         const c = parseFloat(document.getElementById('costoP').value);
         const v = parseFloat(document.getElementById('ventaP').value);
+        const u = parseInt(document.getElementById('unidadesP').value);
 
-        if(n && c && v) {
-            productos.push({ nombre: n, costo: c, venta: v, cantidadVentas: 0 });
+        if(n && c && v && u) {
+            productos.push({ nombre: n, costo: c, venta: v, stock: u, vendidosHoy: 0 });
             localStorage.setItem('jp_prods', JSON.stringify(productos));
-            actualizarInterfaz();
-            alert("Producto guardado");
+            actualizarTodo();
+            limpiarCampos(['nombreP', 'costoP', 'ventaP', 'unidadesP']);
+        } else {
+            alert("Completa todos los campos");
         }
     }
 
     function registrarVenta() {
         const index = document.getElementById('listaProductos').value;
-        if(index !== "") {
-            const p = productos[index];
-            p.cantidadVentas += 1;
-            ventasDelDia.push({ nombre: p.nombre, ganancia: (p.venta - p.costo), fecha: new Date().toLocaleString() });
+        if(index === "") return alert("Selecciona un producto");
+
+        const p = productos[index];
+        if(p.stock > 0) {
+            p.stock -= 1;
+            p.vendidosHoy += 1;
+            ventasDelDia.push({ 
+                nombre: p.nombre, 
+                ganancia: (p.venta - p.costo), 
+                precioVenta: p.venta 
+            });
             
             localStorage.setItem('jp_prods', JSON.stringify(productos));
             localStorage.setItem('jp_ventas_dia', JSON.stringify(ventasDelDia));
-            actualizarInterfaz();
+            actualizarTodo();
+        } else {
+            alert("¡Sin Stock disponible para este producto!");
         }
     }
 
     function finalizarDia() {
-        if(ventasDelDia.length === 0) return alert("No hay ventas hoy");
+        if(ventasDelDia.length === 0) return alert("No hay ventas registradas hoy");
 
         let gananciaDia = ventasDelDia.reduce((total, v) => total + v.ganancia, 0);
-        let masVendido = [...productos].sort((a,b) => b.cantidadVentas - a.cantidadVentas)[0].nombre;
+        let totalVendido = ventasDelDia.reduce((total, v) => total + v.precioVenta, 0);
+        let masVendido = [...productos].sort((a,b) => b.vendidosHoy - a.vendidosHoy)[0];
 
         const cierre = {
             fecha: new Date().toLocaleDateString(),
-            totalGanado: gananciaDia,
-            productoEstrella: masVendido,
-            numVentas: ventasDelDia.length
+            ganancia: gananciaDia,
+            bruto: totalVendido,
+            estrella: masVendido.vendidosHoy > 0 ? masVendido.nombre : "Ninguno",
+            totalItems: ventasDelDia.length
         };
 
         historialCierres.unshift(cierre);
         localStorage.setItem('jp_historial', JSON.stringify(historialCierres));
 
-        // Limpiar día
+        // Limpiar jornada
         ventasDelDia = [];
-        productos.forEach(p => p.cantidadVentas = 0);
+        productos.forEach(p => p.vendidosHoy = 0);
         localStorage.setItem('jp_ventas_dia', JSON.stringify(ventasDelDia));
         localStorage.setItem('jp_prods', JSON.stringify(productos));
         
-        actualizarInterfaz();
-        alert("¡Día finalizado! Datos guardados en el historial.");
+        actualizarTodo();
+        alert("¡Cierre de día exitoso!");
     }
 
-    function actualizarInterfaz() {
-        // Actualizar Select
+    function filtrarProductos() {
+        const texto = document.getElementById('busqueda').value.toLowerCase();
         const select = document.getElementById('listaProductos');
-        select.innerHTML = productos.map((p, i) => `<option value="${i}">${p.nombre} ($${p.venta})</option>`).join('');
+        select.innerHTML = "";
+        
+        productos.forEach((p, i) => {
+            if(p.nombre.toLowerCase().includes(texto)) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = `${p.nombre} | Stock: ${p.stock} | Precio: ${formatoMoneda.format(p.venta)}`;
+                select.add(opt);
+            }
+        });
+    }
 
-        // Ganancia y Top
+    function actualizarTodo() {
+        // Actualizar Lista y Tabla
+        filtrarProductos();
+        const tabla = document.getElementById('tablaStock');
+        tabla.innerHTML = productos.map(p => `
+            <tr>
+                <td>${p.nombre}</td>
+                <td><span class="badge-stock">${p.stock} unid.</span></td>
+                <td>${p.vendidosHoy}</td>
+            </tr>
+        `).join('');
+
+        // Estadísticas
         let ganancia = ventasDelDia.reduce((total, v) => total + v.ganancia, 0);
-        document.getElementById('gananciaTotal').innerText = `$${ganancia.toLocaleString()}`;
+        document.getElementById('gananciaTotal').innerText = formatoMoneda.format(ganancia);
 
-        let top = [...productos].sort((a,b) => b.cantidadVentas - a.cantidadVentas);
-        document.getElementById('productoTop').innerText = top[0] && top[0].cantidadVentas > 0 ? top[0].nombre : "---";
+        let top = [...productos].sort((a,b) => b.vendidosHoy - a.vendidosHoy);
+        document.getElementById('productoTop').innerText = top[0] && top[0].vendidosHoy > 0 ? top[0].nombre : "---";
 
         // Historial
         const histDiv = document.getElementById('contenedorHistorial');
         histDiv.innerHTML = historialCierres.map(h => `
             <div class="historial-item">
-                <b>📅 ${h.fecha}</b> | Ganancia: <span style="color:#2ecc71">$${h.totalGanado}</span><br>
-                🚀 Top: ${h.productoEstrella} (${h.numVentas} ventas)
+                <b>📅 ${h.fecha}</b> | Ventas: ${h.totalItems}<br>
+                <span style="color:var(--exito)">Ganancia: ${formatoMoneda.format(h.ganancia)}</span><br>
+                ⭐ Top: ${h.estrella}
             </div>
         `).join('');
     }
 
-    actualizarInterfaz();
+    function limpiarCampos(ids) {
+        ids.forEach(id => document.getElementById(id).value = "");
+    }
+
+    actualizarTodo();
 </script>
 
 </body>
